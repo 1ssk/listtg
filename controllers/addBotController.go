@@ -3,6 +3,7 @@ package controllers
 import (
 	"listtg/initializers"
 	"listtg/models"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -20,12 +21,21 @@ func AddApplication(c *gin.Context) {
 		Image            string   `json:"image"`
 		Tags             []string `json:"tags"`
 		Date             string   `json:"date"`
+		Type             string   `json:"type"`
 	}
 
 	// Привязываем данные из запроса
 	if err := c.Bind(&body); err != nil {
 		c.JSON(400, gin.H{
 			"error": "Неверный формат данных",
+		})
+		return
+	}
+
+	// Проверка типа проекта
+	if body.Type != "bot" && body.Type != "channel" && body.Type != "group" {
+		c.JSON(400, gin.H{
+			"error": "Неверный тип проекта. Допустимые значения: bot, channel, group",
 		})
 		return
 	}
@@ -43,6 +53,7 @@ func AddApplication(c *gin.Context) {
 		Link:             body.Link,
 		Image:            body.Image,
 		Tags:             body.Tags,
+		Type:             body.Type,
 		Date:             body.Date,
 		Status:           "pending", // Статус по умолчанию
 		CreatedAt:        time.Now(),
@@ -68,11 +79,12 @@ func AddApplication(c *gin.Context) {
 // GetAllApplications возвращает все заявки
 func GetAllApplications(c *gin.Context) {
 	var applications []models.Application
-	initializers.DB.Find(&applications)
-
-	c.JSON(200, gin.H{
-		"applications": applications,
-	})
+	result := initializers.DB.Find(&applications)
+	if result.Error != nil {
+		c.JSON(500, gin.H{"error": "failed to query applications"})
+		return
+	}
+	c.JSON(200, applications)
 }
 
 // GetPendingApplications возвращает заявки ожидающие модерации
@@ -116,47 +128,36 @@ func GetApplication(c *gin.Context) {
 
 // UpdateApplicationStatus обновляет статус заявки
 func UpdateApplicationStatus(c *gin.Context) {
-	id := c.Param("id")
-
 	var body struct {
-		Status string `json:"status"` // "approved" или "rejected"
+		ID     string `json:"id"`
+		Status string `json:"status"`
 	}
 
-	if err := c.Bind(&body); err != nil {
-		c.JSON(400, gin.H{
-			"error": "Неверный формат данных",
-		})
+	if err := c.BindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
 		return
 	}
 
-	// Проверяем валидность статуса
 	if body.Status != "approved" && body.Status != "rejected" && body.Status != "pending" {
-		c.JSON(400, gin.H{
-			"error": "Неверный статус. Допустимые значения: approved, rejected, pending",
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid status"})
 		return
 	}
 
-	var application models.Application
-	result := initializers.DB.First(&application, "id = ?", id)
-
+	var app models.Application
+	result := initializers.DB.First(&app, "id = ?", body.ID)
 	if result.Error != nil {
-		c.JSON(404, gin.H{
-			"error": "Заявка не найдена",
-		})
+		c.JSON(http.StatusNotFound, gin.H{"error": "application not found"})
 		return
 	}
 
-	// Обновляем статус и время обновления
-	application.Status = body.Status
-	application.UpdatedAt = time.Now()
+	app.Status = body.Status
+	app.UpdatedAt = time.Now()
+	if err := initializers.DB.Save(&app).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update"})
+		return
+	}
 
-	initializers.DB.Save(&application)
-
-	c.JSON(200, gin.H{
-		"message":     "Статус заявки обновлен",
-		"application": application,
-	})
+	c.JSON(http.StatusOK, gin.H{"ok": true, "application": app})
 }
 
 // DeleteApplication удаляет заявку

@@ -5,6 +5,7 @@ import (
 	"listtg/initializers"
 	"listtg/middleware"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,6 +17,14 @@ func Init() {
 
 func main() {
 	r := gin.Default()
+
+	// CORS: разрешаем фронтенду обращаться к API (в разработке можно AllowAllOrigins)
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"}, // или []string{"*"} для всех
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}))
 
 	Init()
 

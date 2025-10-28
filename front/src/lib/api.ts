@@ -161,7 +161,7 @@ export const adminAPI = {
   updateApplicationStatus: async (id: string, status: ProjectStatus): Promise<void> => {
     try {
       const response = await fetch(`${API_BASE_URL}/admin/update`, {
-        method: "POST",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
@@ -178,3 +178,14 @@ export const adminAPI = {
     }
   },
 };
+
+export async function updateApplicationStatus(id: string, status: string) {
+  const resp = await fetch("http://localhost:8080/api/v1/admin/update", {
+    method: "PUT",
+    credentials: "include", // если используете cookie/session
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, status }),
+  });
+  if (!resp.ok) throw new Error("Failed to update application status");
+  return resp.json();
+}

@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "./ui/dialog";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -52,16 +53,11 @@ export function ProjectModal({ project, open, onOpenChange }: ProjectModalProps)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              {getTypeIcon()}
-            </div>
-            {project.name}
-          </DialogTitle>
-        </DialogHeader>
-
+      <DialogContent aria-describedby="project-desc">
+        <DialogTitle>Детали проекта</DialogTitle>
+        <DialogDescription id="project-desc">
+          Информация о проекте и действия модерации.
+        </DialogDescription>
         <div className="space-y-6">
           {/* Image */}
           {project.image && (

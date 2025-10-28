@@ -15,6 +15,7 @@ type Application struct {
 	Link             string    `gorm:"not null" json:"link"`
 	Image            string    `json:"image"`
 	Tags             []string  `gorm:"type:text;serializer:json" json:"tags"`
+	Type             string    `gorm:"not null" json:"type"`
 	Date             string    `gorm:"not null" json:"date"`
 	Status           string    `gorm:"default:pending" json:"status"`
 	CreatedAt        time.Time `json:"createdAt"`

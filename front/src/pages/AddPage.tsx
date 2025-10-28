@@ -15,6 +15,7 @@ import {
 import { CATEGORIES, ProjectType } from "../types";
 import { toast } from "sonner@2.0.3";
 import { publicAPI } from "../lib/api";
+import { ImageWithFallback } from "../components/ImageWithFallback";
 
 export function AddPage() {
   const [formData, setFormData] = useState({
@@ -25,6 +26,7 @@ export function AddPage() {
     shortDescription: "",
     fullDescription: "",
     tags: "",
+    image: "",
     date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -106,6 +108,7 @@ export function AddPage() {
       shortDescription: "",
       fullDescription: "",
       tags: "",
+      image: "",
       date: new Date().toISOString().split('T')[0],
     });
     setImageFile(null);
@@ -151,30 +154,39 @@ export function AddPage() {
             className="grid grid-cols-3 gap-4 mt-2"
           >
             <div>
-              <RadioGroupItem value="bot" id="bot" className="peer sr-only" />
+              <RadioGroupItem value="bot" id="bot" className="sr-only" />
               <Label
                 htmlFor="bot"
-                className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary cursor-pointer transition-all"
+                className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 p-4 cursor-pointer transition-all
+                  ${formData.type === "bot"
+                    ? "border-primary bg-accent text-accent-foreground"
+                    : "border-muted bg-popover hover:bg-accent hover:text-accent-foreground"}`}
               >
                 <Bot className="w-6 h-6" />
                 <span>Бот</span>
               </Label>
             </div>
             <div>
-              <RadioGroupItem value="channel" id="channel" className="peer sr-only" />
+              <RadioGroupItem value="channel" id="channel" className="sr-only" />
               <Label
                 htmlFor="channel"
-                className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary cursor-pointer transition-all"
+                className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 p-4 cursor-pointer transition-all
+                  ${formData.type === "channel"
+                    ? "border-primary bg-accent text-accent-foreground"
+                    : "border-muted bg-popover hover:bg-accent hover:text-accent-foreground"}`}
               >
                 <Radio className="w-6 h-6" />
                 <span>Канал</span>
               </Label>
             </div>
             <div>
-              <RadioGroupItem value="group" id="group" className="peer sr-only" />
+              <RadioGroupItem value="group" id="group" className="sr-only" />
               <Label
                 htmlFor="group"
-                className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary cursor-pointer transition-all"
+                className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 p-4 cursor-pointer transition-all
+                  ${formData.type === "group"
+                    ? "border-primary bg-accent text-accent-foreground"
+                    : "border-muted bg-popover hover:bg-accent hover:text-accent-foreground"}`}
               >
                 <Users className="w-6 h-6" />
                 <span>Группа</span>
@@ -277,38 +289,38 @@ export function AddPage() {
           />
         </div>
 
-        {/* Image Upload */}
+        {/* URL изображения */}
         <div>
-          <Label htmlFor="image">Изображение (JPG/PNG, до 2 МБ)</Label>
-          <div className="mt-2">
-            <label
-              htmlFor="image"
-              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-muted rounded-lg cursor-pointer hover:bg-accent transition-colors"
-            >
-              {imagePreview ? (
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="h-full object-contain rounded-lg"
+          <Label htmlFor="image" className="text-gray-900">
+            🖼️ URL изображения (опционально)
+          </Label>
+          <Input
+            id="image"
+            type="url"
+            placeholder="https://example.com/image.jpg"
+            value={formData.image}
+            onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+            className="mt-2"
+          />
+          <p className="text-sm text-gray-500 mt-1">
+            Если не указано, будет использовано изображение по умолчанию
+          </p>
+              
+          {/* Предпросмотр изображения */}
+          {formData.image && (
+            <div className="mt-3">
+              <p className="text-sm text-gray-700 mb-2">Предпросмотр:</p>
+              <div className="w-full max-w-sm aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                <ImageWithFallback
+                  src={formData.image}
+                  alt="Предпросмотр"
+                  className="w-full h-full object-cover"
                 />
-              ) : (
-                <div className="flex flex-col items-center">
-                  <Upload className="w-8 h-8 text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    Нажмите для загрузки изображения
-                  </p>
-                </div>
-              )}
-              <input
-                id="image"
-                type="file"
-                accept="image/jpeg,image/png"
-                onChange={handleImageChange}
-                className="hidden"
-              />
-            </label>
-          </div>
-        </div>
+              </div>
+            </div>
+          )}
+        </div> 
+
 
         {/* Submit Button */}
         <Button type="submit" size="lg" className="w-full" disabled={loading}>

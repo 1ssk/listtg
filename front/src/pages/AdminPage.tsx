@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Eye, Check, X, Trash2, LogOut, LogIn } from "lucide-react";
 import { Application } from "../types";
 import { Button } from "../components/ui/button";
@@ -21,7 +21,8 @@ import { authAPI, adminAPI } from "../lib/api";
 export function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginForm, setLoginForm] = useState({ login: "", password: "" });
-  const [applications, setApplications] = useState<Application[]>([]);
+  // Инициализируем как пустой массив — безопасно для .filter/.map
+  const [applications, setApplications] = useState<any[]>([]);
   const [selectedProject, setSelectedProject] = useState<Application | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -39,6 +40,38 @@ export function AdminPage() {
     }
   }, [isAuthenticated]);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const resp = await fetch("http://localhost:8080/api/v1/admin/", {
+          method: "GET",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!resp.ok) {
+          // обработка ошибки
+          console.error("Failed to fetch applications", resp.status);
+          return;
+        }
+        const contentType = resp.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+          const data = await resp.json();
+          const apps = Array.isArray(data) ? data : Array.isArray(data?.applications) ? data.applications : [];
+          setApplications(apps);
+        } else {
+          // пришёл HTML (скорее всего фронтенд index.html) — логируем и не ломаем UI
+          const text = await resp.text();
+          console.warn("Expected JSON but got:", text.slice(0, 200));
+          setApplications([]);
+        }
+      } catch (err) {
+        console.error("Error fetching applications:", err);
+      }
+    };
+
+    fetchData();
+  }, []);
+  
   const checkAuth = async () => {
     const valid = await authAPI.validateToken();
     setIsAuthenticated(valid);
@@ -377,3 +410,6 @@ export function AdminPage() {
     </div>
   );
 }
+
+// сохранить совместимость с существующими импортами
+export default AdminPage;
