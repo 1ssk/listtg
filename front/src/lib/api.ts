@@ -26,16 +26,13 @@ export interface DeleteRequest {
 export const publicAPI = {
   // GET /api/v1/bot - Получить все одобренные проекты
   getApprovedProjects: async (): Promise<Application[]> => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/bot`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch projects");
-      }
-      return await response.json();
-    } catch (error) {
-      console.error("Error fetching projects:", error);
-      throw error;
-    }
+    const resp = await fetch("http://localhost:8080/api/v1/bot/", { credentials: "include" });
+    if (!resp.ok) throw new Error("Failed to fetch projects");
+    const ct = resp.headers.get("content-type") || "";
+    if (!ct.includes("application/json")) return [];
+    const data = await resp.json();
+    // API может возвращать либо массив, либо объект { applications: [...] }
+    return Array.isArray(data) ? data : Array.isArray(data?.applications) ? data.applications : [];
   },
 
   // POST /api/v1/bot/addApplication - Добавить новую заявку

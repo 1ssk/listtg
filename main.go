@@ -18,9 +18,9 @@ func Init() {
 func main() {
 	r := gin.Default()
 
-	// CORS: разрешаем фронтенду обращаться к API (в разработке можно AllowAllOrigins)
+	// CORS для разработки — разрешаем фронту обращаться к API
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"}, // или []string{"*"} для всех
+		AllowOrigins:     []string{"http://localhost:3000"}, // дев: явно фронтенд
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
