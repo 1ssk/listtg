@@ -162,19 +162,33 @@ func UpdateApplicationStatus(c *gin.Context) {
 
 // DeleteApplication удаляет заявку
 func DeleteApplication(c *gin.Context) {
-	id := c.Param("id")
+	// Поддерживаем JSON в теле или id в query для совместимости
+	var body struct {
+		ID string `json:"id"`
+	}
 
-	var application models.Application
-	result := initializers.DB.Where("id = ?", id).Delete(&application)
+	_ = c.BindJSON(&body) // игнорируем ошибку, попробуем query если не пришло
 
-	if result.Error != nil || result.RowsAffected == 0 {
-		c.JSON(404, gin.H{
-			"error": "Заявка не найдена",
-		})
+	id := body.ID
+	if id == "" {
+		id = c.Query("id")
+	}
+
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
 		return
 	}
 
-	c.JSON(200, gin.H{
-		"message": "Заявка успешно удалена",
-	})
+	var app models.Application
+	if err := initializers.DB.First(&app, "id = ?", id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "application not found"})
+		return
+	}
+
+	if err := initializers.DB.Delete(&app).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete application"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"ok": true})
 }

@@ -29,24 +29,32 @@ export function AddPage() {
     image: "",
     date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  const [imagePreviewError, setImagePreviewError] = useState(false); // ДОБАВЛЕНО: Отслеживание ошибок загрузки превью
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("Размер файла не должен превышать 2 МБ");
-        return;
-      }
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+
+
+  const handleImageUrlChange = (url: string) => {
+    setFormData({ ...formData, image: url });
+    setImagePreviewError(false); // Сбрасываем ошибку при изменении URL
+    
+    // Простая валидация URL
+    if (url && !isValidImageUrl(url)) {
+      toast.error("Пожалуйста, введите корректный URL изображения");
+    }
+  };
+
+    const isValidImageUrl = (url: string): boolean => {
+    try {
+      const urlObj = new URL(url);
+      return /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(urlObj.pathname) || 
+             urlObj.hostname.includes('unsplash.com') ||
+             urlObj.hostname.includes('imgur.com') ||
+             urlObj.hostname.includes('cloudinary.com');
+    } catch {
+      return false;
     }
   };
 
@@ -80,7 +88,7 @@ export function AddPage() {
         shortDescription: formData.shortDescription,
         fullDescription: formData.fullDescription,
         link: formData.link,
-        image: imagePreview || "", // Base64 или путь к изображению
+        image: formData.image || "", // Base64 или путь к изображению
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [],
         date: formData.date,
         type: formData.type,
